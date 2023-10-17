@@ -33,8 +33,8 @@ void setup_rtc_ntp(void);
 const char* ssid = "ORT-IoT";
 const char* password = "OrtIOTnew22$2";
 
-int horaAlarma = 13;
-int minAlarma = 44;
+int horaAlarma = 14;
+int minAlarma = 40;
 String text;
 //int casillero = 1;
 
@@ -84,11 +84,12 @@ void handleNewMessages(int numNewMessages) {
     String from_name = bot.messages[i].from_name;
      if (estado2 == ALARMA) {
       Serial.println("ALARMA"); 
-      if (text == "/Alarma") { 
+      if (text == "/Alarma") {
+                esperandoRespuesta = false; 
         Serial.println("SE DETECTÓ ALARMA"); 
       estado2 = HORA;
       }
-      if(text != "/Alarma"){
+      else{
          Serial.println("NO SE DETECTÓ ALARMA"); 
         bot.sendMessage(CHAT_ID, "Texto invalido, escriba (/Alarma) para comenzar a programar la alarma", "");
       }
@@ -113,7 +114,7 @@ void handleNewMessages(int numNewMessages) {
         bot.sendMessage(CHAT_ID, String(horaAlarma), ""); 
     }
     else if (text == "/Continuar"){
-        Serial.println("CONTINUAR"); 
+        Serial.println("CONTINUAR HORA"); 
         esperandoRespuesta = false;
         estado2 = MINUTOS;
       }
@@ -135,7 +136,7 @@ void handleNewMessages(int numNewMessages) {
         bot.sendMessage(CHAT_ID, String(minAlarma), ""); 
 
     }
-    if(text == "/Min menos") {
+    else if(text == "/Min menos") {
         Serial.println("MIN MENOS"); 
         minAlarma = minAlarma - 5;
         if(minAlarma == 0){
@@ -144,36 +145,35 @@ void handleNewMessages(int numNewMessages) {
        bot.sendMessage(CHAT_ID, String(minAlarma), ""); 
  
     }
-    
-      if (text != "/Min mas" || text != "/Min menos" || text != "/Continuar"){
-        Serial.println("TEXTO INVÁLIDO"); 
-        bot.sendMessage(CHAT_ID, "Texto inválido, ingrese (Min mas) para aumentar los minutos en 5 o (Min menos) para disminuir los minutos en 5, para Continuar ingrese (Continuar)", "");
-      }
-
-       if (text == "/Continuar"){
-        Serial.println("CONTINUAR"); 
+    else if (text == "/Continuar"){
+        Serial.println("CONTINUAR MINUTOS"); 
         estado2 = CONFIRMAR;
+      }
+    
+      else{
+        Serial.println("TEXTO INVÁLIDO MINUTOS"); 
+        bot.sendMessage(CHAT_ID, "Texto inválido, ingrese (Min mas) para aumentar los minutos en 5 o (Min menos) para disminuir los minutos en 5, para Continuar ingrese (Continuar)", "");
       }
   }
 
   if(estado2 == CONFIRMAR){
-    if(text == "/hora"){
+    if(text == "/Hora"){
       Serial.println("HORA"); 
       estado2 = HORA;
      }
-     if(text == "/min"){
+     else if(text == "/Min"){
       Serial.println("MIN"); 
       estado2 = MINUTOS;
      }
      /*if(text == "casillero"){
       estado2 = CASILLERO;
      }*/
-     if(text == "/confirmar"){
+     else if(text == "/Confirmar"){
       Serial.println("CONFIRMAR"); 
       estado2 = ALARMA;
      }
-     if(text != "/Hora" || text != "/Min" || text != "/Casillero" || text != "/Confirmar"){
-       Serial.println("TEXTO INVÁLIDO"); 
+     else{
+       Serial.println("TEXTO INVÁLIDO CONFIRMAR"); 
        bot.sendMessage(CHAT_ID, "texto invalido, ingrese (confirmar), en caso de querer modificar la hora, ingrese (hora), en caso de querer modificar los minutos, ingrese (min), en caso de querer modificar el numero de casillero, ingrese (casillero) ", "");
      }
   }
@@ -206,7 +206,6 @@ void setup() {
   }
   // Print ESP32 Local IP Address
   Serial.println(WiFi.localIP());
-  bot.sendMessage(CHAT_ID, "Hola! Para programar una alarma ingrese: (/Alarma)", "");
 
   
 }
@@ -214,7 +213,11 @@ void loop() {
 
   switch(estado2){
       case ALARMA:
-       Serial.println("ALARMA"); 
+       Serial.println("ALARMA");
+       if(esperandoRespuesta == false){
+       bot.sendMessage(CHAT_ID, "Hola! Para programar una alarma ingrese: (/Alarma)", "");
+      esperandoRespuesta = true;
+       } 
        if (millis() > lastTimeBotRan + botRequestDelay) {
        int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
 
